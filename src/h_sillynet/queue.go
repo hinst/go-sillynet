@@ -17,6 +17,8 @@ func (this *MemoryBlockQueue) LengthLimit() int {
 	return len(this.items)
 }
 
+// Returns true if the memory block was successfully pushed & sotred.
+// Returns false if there is not enough free space.
 func (this *MemoryBlockQueue) Push(memoryBlock []byte) bool {
 	this.locker.Lock()
 	var hasFreeSpace = this.length < this.LengthLimit()
