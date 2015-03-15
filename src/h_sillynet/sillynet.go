@@ -19,8 +19,8 @@ func StartThread(f func(thread *Thread)) *Thread {
 	return thread
 }
 
-type TClient struct {
-	connection net.TCPConn
+type Client struct {
+	connection net.Conn
 }
 
 // "Simple" means that it has a single access point. Only one client can connect.
@@ -29,7 +29,7 @@ type SimpleServer struct {
 	listener        *net.TCPListener
 	acceptionThread *Thread
 	Active          bool
-	connection      net.TCPConn
+	client          *Client
 }
 
 func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
@@ -37,11 +37,11 @@ func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 		simpleServer.listener.SetDeadline(time.Now().Add(1 * time.Second))
 		var acceptedConnection, acceptResult = simpleServer.listener.Accept()
 		if nil == acceptResult /*success*/ {
-			simpleServer.connection = acceptedConnection
+			simpleServer.client = &Client{connection: acceptedConnection}
 		}
 	}
 	for simpleServer.Active {
-		if nil == simpleServer.connection {
+		if nil == simpleServer.client {
 			tryAcceptConnection()
 		}
 	}
