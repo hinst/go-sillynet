@@ -1,7 +1,6 @@
 package h_sillynet
 
 import "net"
-import "strconv"
 import "time"
 import "sync"
 
@@ -20,36 +19,49 @@ func StartThread(f func(thread *Thread)) *Thread {
 	return thread
 }
 
+type TClient struct {
+	connection net.TCPConn
+}
+
 // "Simple" means that it has a single access point. Only one client can connect.
 type SimpleServer struct {
 	Port            int
-	listener        net.TCPListener
+	listener        *net.TCPListener
 	acceptionThread *Thread
 	Active          bool
+	connection      net.TCPConn
 }
 
 func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
-	for simpleServer.Active {
+	var tryAcceptConnection = func() {
 		simpleServer.listener.SetDeadline(time.Now().Add(1 * time.Second))
 		var acceptedConnection, acceptResult = simpleServer.listener.Accept()
 		if nil == acceptResult /*success*/ {
-
-			break
+			simpleServer.connection = acceptedConnection
+		}
+	}
+	for simpleServer.Active {
+		if nil == simpleServer.connection {
+			tryAcceptConnection()
 		}
 	}
 }
 
 func (simpleServer *SimpleServer) Start() bool {
-	if false == simpleServer.Active {
-	}
 	var result = false
-	var listener, listenResult = net.Listen("tcp", ":"+strconv.Itoa(simpleServer.Port))
-	if nil == listenResult /*success*/ {
-		var simpleServer = &SimpleServer{}
-		simpleServer.listener = listener.(net.TCPListener)
-		simpleServer.Active = true
-		simpleServer.acceptionThread = StartThread(simpleServer.ClientAcceptionRoutine)
-		result = true
+	if simpleServer.Active {
+		result = true // already started
+	} else {
+		var address = &net.TCPAddr{}
+		address.Port = simpleServer.Port
+		var listener, listenResult = net.ListenTCP("tcp", address)
+		if nil == listenResult /*success*/ {
+			var simpleServer = &SimpleServer{}
+			simpleServer.listener = listener
+			simpleServer.Active = true
+			simpleServer.acceptionThread = StartThread(simpleServer.ClientAcceptionRoutine)
+			result = true
+		}
 	}
 	return result
 }
