@@ -12,6 +12,7 @@ type Thread struct {
 func StartThread(f func(thread *Thread)) *Thread {
 	var thread = &Thread{}
 	thread.waitGroup.Add(1)
+	thread.Active = true
 	go func() {
 		f(thread)
 		thread.waitGroup.Done()
@@ -19,12 +20,15 @@ func StartThread(f func(thread *Thread)) *Thread {
 	return thread
 }
 
+func (this *Thread) WaitFor() {
+	this.waitGroup.Wait()
+}
+
 // "Simple" means that it has a single access point. Only one client can connect.
 type SimpleServer struct {
 	Port            int
 	listener        *net.TCPListener
 	acceptionThread *Thread
-	Active          bool
 	client          *Client
 }
 
@@ -36,7 +40,7 @@ func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 			simpleServer.client = &Client{connection: acceptedConnection}
 		}
 	}
-	for simpleServer.Active {
+	for simpleServer.acceptionThread.Active {
 		if nil == simpleServer.client {
 			tryAcceptConnection()
 		}
@@ -45,7 +49,7 @@ func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 
 func (simpleServer *SimpleServer) Start() bool {
 	var result = false
-	if simpleServer.Active {
+	if nil == simpleServer.acceptionThread {
 		result = true // already started
 	} else {
 		var address = &net.TCPAddr{}
@@ -54,10 +58,17 @@ func (simpleServer *SimpleServer) Start() bool {
 		if nil == listenResult /*success*/ {
 			var simpleServer = &SimpleServer{}
 			simpleServer.listener = listener
-			simpleServer.Active = true
 			simpleServer.acceptionThread = StartThread(simpleServer.ClientAcceptionRoutine)
 			result = true
 		}
 	}
 	return result
+}
+
+func (this *SimpleServer) Stop() {
+	if this.acceptionThread != nil {
+		this.acceptionThread.Active = false
+		this.acceptionThread.WaitFor()
+		this.acceptionThread = nil
+	}
 }
