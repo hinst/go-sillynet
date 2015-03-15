@@ -19,10 +19,6 @@ func StartThread(f func(thread *Thread)) *Thread {
 	return thread
 }
 
-type Client struct {
-	connection net.Conn
-}
-
 // "Simple" means that it has a single access point. Only one client can connect.
 type SimpleServer struct {
 	Port            int
