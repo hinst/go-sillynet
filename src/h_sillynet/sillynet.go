@@ -19,7 +19,7 @@ func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 			simpleServer.client = &Client{connection: acceptedConnection}
 		}
 	}
-	for simpleServer.acceptionThread.Active {
+	for thread.Active {
 		if nil == simpleServer.client {
 			tryAcceptConnection()
 		}
