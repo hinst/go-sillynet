@@ -9,6 +9,8 @@ type SimpleServer struct {
 	listener        *net.TCPListener
 	acceptionThread *Thread
 	client          *Client
+	incoming        *MemoryBlockQueue
+	outgoing        *MemoryBlockQueue
 }
 
 func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
