@@ -9,6 +9,10 @@ import "strconv"
 
 func main() {
 	var simpleServer h_sillynet.SimpleServer
+	var receiverThread = h_sillynet.StartThread(func(thread *h_sillynet.Thread) {
+		for thread.Active {
+		}
+	})
 	simpleServer.Port = 9077
 	var reader = bufio.NewReader(os.Stdin)
 	var command = ""
