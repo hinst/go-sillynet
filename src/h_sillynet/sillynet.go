@@ -2,15 +2,15 @@ package h_sillynet
 
 import "net"
 import "time"
+import "sync"
 
 // "Simple" means that it has a single access point. Only one client can connect.
 type SimpleServer struct {
 	Port            int
 	listener        *net.TCPListener
 	acceptionThread *Thread
+	clientLocker    sync.Locker
 	client          *Client
-	incoming        *MemoryBlockQueue
-	outgoing        *MemoryBlockQueue
 }
 
 func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
@@ -18,7 +18,7 @@ func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 		simpleServer.listener.SetDeadline(time.Now().Add(1 * time.Second))
 		var acceptedConnection, acceptResult = simpleServer.listener.Accept()
 		if nil == acceptResult /*success*/ {
-			simpleServer.client = &Client{connection: acceptedConnection}
+			simpleServer.SetClient(&Client{connection: acceptedConnection})
 		}
 	}
 	for thread.Active {
@@ -52,4 +52,17 @@ func (this *SimpleServer) Stop() {
 		this.acceptionThread.WaitFor()
 		this.acceptionThread = nil
 	}
+}
+
+func (this *SimpleServer) Client() *Client {
+	this.clientLocker.Lock()
+	var result = this.client
+	this.clientLocker.Unlock()
+	return result
+}
+
+func (this *SimpleServer) SetClient(a *Client) {
+	this.clientLocker.Lock()
+	this.client = a
+	this.clientLocker.Unlock()
 }
