@@ -11,6 +11,11 @@ func main() {
 	var simpleServer h_sillynet.SimpleServer
 	var receiverThread = h_sillynet.StartThread(func(thread *h_sillynet.Thread) {
 		for thread.Active {
+			var message = simpleServer.Client().Pop()
+			if message != nil {
+				var messageText = string(message)
+				fmt.Println("Message received: '" + messageText + "'")
+			}
 		}
 	})
 	simpleServer.Port = 9077
