@@ -52,6 +52,7 @@ func (this *SimpleServer) Stop() {
 		this.acceptionThread.Active = false
 		this.acceptionThread.WaitFor()
 		this.acceptionThread = nil
+		this.SetClient(nil)
 	}
 }
 
