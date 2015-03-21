@@ -24,6 +24,8 @@ func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 	for thread.Active {
 		if nil == simpleServer.client {
 			tryAcceptConnection()
+		} else {
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
