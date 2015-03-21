@@ -4,7 +4,7 @@ import "net"
 import "time"
 import "sync"
 
-// "Simple" means that it has a single access point. Only one client can connect.
+// "Simple" means that it has one access point. Only one client can connect.
 type SimpleServer struct {
 	Port            int
 	listener        *net.TCPListener
