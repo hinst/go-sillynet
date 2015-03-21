@@ -1,0 +1,2 @@
+go build h_sillynet_proto1
+h_sillynet_proto1.exe
