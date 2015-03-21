@@ -25,7 +25,17 @@ func (this *MessageReceiver) ready() bool {
 	return (this.expectedSizeDataPosition == SizeOfInt64) && (this.expectedSize == this.memory.Len())
 }
 
-func (this *MessageReceiver) Extract() []bytes {
+func (this *MessageReceiver) clear() {
+	this.memory.Reset()
+	this.expectedSizeDataPosition = 0
+}
+
+func (this *MessageReceiver) Extract() []byte {
 	if this.ready() {
+		var result = this.memory.Bytes()
+		this.clear()
+		return result
+	} else {
+		return nil
 	}
 }
