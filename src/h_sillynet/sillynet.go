@@ -9,7 +9,7 @@ type SimpleServer struct {
 	Port            int
 	listener        *net.TCPListener
 	acceptionThread *Thread
-	clientLocker    sync.Locker
+	clientLocker    sync.Mutex
 	client          *Client
 }
 
@@ -28,18 +28,17 @@ func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 	}
 }
 
-func (simpleServer *SimpleServer) Start() bool {
+func (this *SimpleServer) Start() bool {
 	var result = false
-	if nil == simpleServer.acceptionThread {
+	if this.acceptionThread != nil {
 		result = true // already started
 	} else {
 		var address = &net.TCPAddr{}
-		address.Port = simpleServer.Port
+		address.Port = this.Port
 		var listener, listenResult = net.ListenTCP("tcp", address)
 		if nil == listenResult /*success*/ {
-			var simpleServer = &SimpleServer{}
-			simpleServer.listener = listener
-			simpleServer.acceptionThread = StartThread(simpleServer.ClientAcceptionRoutine)
+			this.listener = listener
+			this.acceptionThread = StartThread(this.ClientAcceptionRoutine)
 			result = true
 		}
 	}

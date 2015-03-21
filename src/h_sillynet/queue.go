@@ -4,22 +4,31 @@ import "sync"
 
 // Threadsafe queue.
 type MemoryBlockQueue struct {
-	length int
-	items  [][]byte
-	locker sync.Locker
+	lengthLimit int
+	length      int
+	items       [][]byte
+	locker      sync.Mutex
 }
 
-func NewMemoryBlockQueue(lengthLimit int) *MemoryBlockQueue {
-	return &MemoryBlockQueue{items: make([][]byte, lengthLimit)}
+const DefaultMemoryBlockQueueLengthLimit = 1000
+
+func (this *MemoryBlockQueue) Init() {
+	if nil == this.items {
+		if 0 == this.lengthLimit {
+			this.lengthLimit = DefaultMemoryBlockQueueLengthLimit
+		}
+		this.items = make([][]byte, this.lengthLimit)
+	}
 }
 
 func (this *MemoryBlockQueue) LengthLimit() int {
-	return len(this.items)
+	return this.lengthLimit
 }
 
 // Returns true if the memory block was successfully pushed & sotred.
 // Returns false if there is not enough free space.
 func (this *MemoryBlockQueue) Push(memoryBlock []byte) bool {
+	this.Init()
 	this.locker.Lock()
 	var hasFreeSpace = this.length < this.LengthLimit()
 	if hasFreeSpace {
@@ -31,6 +40,7 @@ func (this *MemoryBlockQueue) Push(memoryBlock []byte) bool {
 }
 
 func (this *MemoryBlockQueue) Pop() []byte {
+	this.Init()
 	var shrink1 = func() {
 		for i := 0; i < this.length-1; i++ {
 			this.items[i] = this.items[i+1]
