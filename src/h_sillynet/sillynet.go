@@ -13,21 +13,22 @@ type SimpleServer struct {
 	client          *Client
 }
 
-func (simpleServer *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
+func (this *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 	var tryAcceptConnection = func() {
-		simpleServer.listener.SetDeadline(time.Now().Add(1 * time.Second))
-		var acceptedConnection, acceptResult = simpleServer.listener.Accept()
+		this.listener.SetDeadline(time.Now().Add(1 * time.Second))
+		var acceptedConnection, acceptResult = this.listener.Accept()
 		if nil == acceptResult /*success*/ {
-			simpleServer.SetClient(&Client{connection: acceptedConnection})
+			this.SetClient(&Client{connection: acceptedConnection})
 		}
 	}
 	for thread.Active {
-		if nil == simpleServer.client {
+		if nil == this.Client() {
 			tryAcceptConnection()
 		} else {
 			time.Sleep(1 * time.Second)
 		}
 	}
+	this.SetClient(nil)
 }
 
 func (this *SimpleServer) Start() bool {
@@ -52,7 +53,6 @@ func (this *SimpleServer) Stop() {
 		this.acceptionThread.Active = false
 		this.acceptionThread.WaitFor()
 		this.acceptionThread = nil
-		this.SetClient(nil)
 	}
 }
 
