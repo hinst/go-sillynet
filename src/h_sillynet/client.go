@@ -8,6 +8,7 @@ func NewClient() *Client {
 	var result = &Client{}
 	result.ReaderThreadThrashingInterval = DefaultClientReaderThreadThrashingInterval()
 	result.WriterThreadThrashingInterval = DefaultClientWriterThreadThrashingInterval()
+	result.writerThreadEvent = sync.NewCond(&sync.Mutex{})
 	return result
 }
 
@@ -15,8 +16,9 @@ type Client struct {
 	connection       net.Conn
 	connectionLocker sync.Mutex
 
-	readerThread *Thread
-	writerThread *Thread
+	readerThread      *Thread
+	writerThread      *Thread
+	writerThreadEvent *sync.Cond
 
 	ReaderThreadThrashingInterval time.Duration
 	WriterThreadThrashingInterval time.Duration
@@ -36,6 +38,7 @@ func DefaultClientWriterThreadThrashingInterval() time.Duration {
 
 func (this *Client) Push(memoryBlock []byte) {
 	this.outgoing.Push(memoryBlock)
+	this.pokeWriterThread()
 }
 
 func (this *Client) Pop() []byte {
@@ -139,7 +142,10 @@ func (this *Client) writerThreadRoutine(thread *Thread) {
 			for writeForward() {
 			}
 		}
-		time.Sleep(this.WriterThreadThrashingInterval)
+		this.writerThreadEvent.L.Lock()
+		this.writerThreadEvent.Wait()
+		this.writerThreadEvent.L.Unlock()
+		//time.Sleep(this.WriterThreadThrashingInterval)
 	}
 }
 
@@ -156,8 +162,15 @@ func (this *Client) Stop() {
 	}
 	if this.readerThread != nil {
 		this.readerThread.Active = false
+		this.pokeWriterThread()
 		this.readerThread.WaitFor()
 		this.readerThread = nil
 	}
 	this.connection = nil
+}
+
+func (this *Client) pokeWriterThread() {
+	this.writerThreadEvent.L.Lock()
+	this.writerThreadEvent.Signal()
+	this.writerThreadEvent.L.Unlock()
 }

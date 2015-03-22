@@ -33,6 +33,9 @@ func (this *MessageReceiver) clear() {
 func (this *MessageReceiver) Extract() []byte {
 	if this.ready() {
 		var result = this.memory.Bytes()
+		if nil == result {
+			result = make([]byte, 0)
+		}
 		this.clear()
 		return result
 	} else {
