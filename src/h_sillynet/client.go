@@ -76,7 +76,7 @@ func (this *Client) readerThreadRoutine(thread *Thread) {
 		var readLength, readResult = connection.Read(buffer)
 		if readResult == nil {
 			if readLength > 0 {
-				this.messageReceiver.Write(buffer)
+				this.messageReceiver.Write(buffer[:readLength])
 				tryExtractMessage()
 			}
 		} else if false == CheckIfNetTimeoutError(readResult) {
