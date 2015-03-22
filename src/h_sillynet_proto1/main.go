@@ -16,7 +16,6 @@ type Application struct {
 func (application *Application) startReceiverThread() {
 	application.receiverThread = h_sillynet.StartThread(func(thread *h_sillynet.Thread) {
 		for thread.Active {
-			time.Sleep(100 * time.Millisecond)
 			var client = application.simpleServer.Client()
 			if client != nil {
 				var message = client.Pop()
@@ -25,8 +24,15 @@ func (application *Application) startReceiverThread() {
 					fmt.Println("Message received: '" + messageText + "'")
 				}
 			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	})
+}
+
+func (application *Application) stopReceiverThread() {
+	application.receiverThread.Active = false
+	application.receiverThread.WaitFor()
+	application.receiverThread = nil
 }
 
 func (application *Application) run() {
@@ -57,6 +63,7 @@ func (application *Application) run() {
 			}
 		}
 	}
+	application.stopReceiverThread()
 }
 
 func main() {

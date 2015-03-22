@@ -18,7 +18,7 @@ func (this *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 		this.listener.SetDeadline(time.Now().Add(1 * time.Second))
 		var acceptedConnection, acceptResult = this.listener.Accept()
 		if nil == acceptResult /*success*/ {
-			var client = &Client{}
+			var client = NewClient()
 			client.connection = acceptedConnection
 			client.Start()
 			this.SetClient(client)
