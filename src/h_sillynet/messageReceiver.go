@@ -47,7 +47,7 @@ func (this *MessageReceiver) Extract() []byte {
 			result = make([]byte, 0)
 		}
 		this.clear()
-		if this.expectedSize < len(result) {
+		if this.expectedSize < int64(len(result)) {
 			this.Write(result[this.expectedSize:])
 			result = result[:this.expectedSize]
 		}
