@@ -9,20 +9,30 @@ type MessageReceiver struct {
 	expectedSizeDataPosition byte
 }
 
-func (this *MessageReceiver) Write(x byte) {
-	if this.expectedSizeDataPosition < SizeOfInt64 {
-		this.expectedSizeData[this.expectedSizeDataPosition] = x
+func (this *MessageReceiver) WriteSize(x []byte) []byte {
+	for (len(x) > 0) && (this.expectedSizeDataPosition < SizeOfInt64) {
+		this.expectedSizeData[this.expectedSizeDataPosition] = x[0]
 		this.expectedSizeDataPosition++
+		x = x[1:]
 		if this.expectedSizeDataPosition == SizeOfInt64 {
 			this.expectedSize = MemoryBlockToInt64(this.expectedSizeData)
 		}
-	} else {
-		this.memory.WriteByte(x)
+	}
+	return x
+}
+
+// x must be not nil.
+func (this *MessageReceiver) Write(x []byte) {
+	if this.expectedSizeDataPosition < SizeOfInt64 {
+		x = this.WriteSize(x)
+	}
+	if len(x) > 0 {
+		this.memory.Write(x)
 	}
 }
 
 func (this *MessageReceiver) ready() bool {
-	return (this.expectedSizeDataPosition == SizeOfInt64) && (this.expectedSize == int64(this.memory.Len()))
+	return (this.expectedSizeDataPosition == SizeOfInt64) && (this.expectedSize <= int64(this.memory.Len()))
 }
 
 func (this *MessageReceiver) clear() {
@@ -37,6 +47,10 @@ func (this *MessageReceiver) Extract() []byte {
 			result = make([]byte, 0)
 		}
 		this.clear()
+		if this.expectedSize < len(result) {
+			this.Write(result[this.expectedSize:])
+			result = result[:this.expectedSize]
+		}
 		return result
 	} else {
 		return nil

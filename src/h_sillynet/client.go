@@ -29,12 +29,14 @@ type Client struct {
 }
 
 func DefaultClientReaderThreadThrashingInterval() time.Duration {
-	return 100 * time.Millisecond
+	return 0 * time.Millisecond
 }
 
 func DefaultClientWriterThreadThrashingInterval() time.Duration {
 	return 10 * time.Millisecond
 }
+
+const DefaultReadBufferSize = 16
 
 func (this *Client) Push(memoryBlock []byte) {
 	this.outgoing.Push(memoryBlock)
@@ -57,7 +59,7 @@ func CheckIfNetTimeoutError(e error) bool {
 }
 
 func (this *Client) readerThreadRoutine(thread *Thread) {
-	var buffer = make([]byte, 1, 1)
+	var buffer = make([]byte, DefaultReadBufferSize)
 	var connection net.Conn
 	var dropConnection = func() {
 		this.connection = nil
@@ -71,17 +73,16 @@ func (this *Client) readerThreadRoutine(thread *Thread) {
 		}
 	}
 	var readForward = func() bool {
-		connection.SetReadDeadline(time.Now().Add(1000 * time.Millisecond))
 		var readLength, readResult = connection.Read(buffer)
 		if readResult == nil {
-			if readLength == 1 {
-				this.messageReceiver.Write(buffer[0])
+			if readLength > 0 {
+				this.messageReceiver.Write(buffer)
 				tryExtractMessage()
 			}
 		} else if false == CheckIfNetTimeoutError(readResult) {
 			dropConnection()
 		}
-		var dataReceived = (connection != nil) && (readResult == nil) && (readLength == 1)
+		var dataReceived = (connection != nil) && (readResult == nil) && (readLength > 0)
 		return dataReceived
 	}
 	for thread.Active {
