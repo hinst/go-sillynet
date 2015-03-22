@@ -17,7 +17,8 @@ func MemoryBlockToInt64(block Int64MemoryBlock) int64 {
 	var x int64 = 0
 	var i uint
 	for i = 0; i < SizeOfInt64; i++ {
-		x = x + int64(block[i]<<(i*8))
+		var currentValue = int64(block[i])
+		x = x | (currentValue << (i * 8))
 	}
 	return x
 }
