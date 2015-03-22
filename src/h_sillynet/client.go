@@ -69,13 +69,14 @@ func (this *Client) readerThreadRoutine(thread *Thread) {
 		connection.Close()
 		connection = nil
 	}
-	var tryExtractMessage = func() {
+	var tryExtractMessages = func() {
 		var incomingMessage = this.messageReceiver.Extract()
-		if incomingMessage != nil {
+		for incomingMessage != nil {
 			this.incoming.Push(incomingMessage)
 			if this.IncomingMessageEvent.Exists() {
 				this.IncomingMessageEvent.Signal()
 			}
+			incomingMessage = this.messageReceiver.Extract()
 		}
 	}
 	var readForward = func() bool {
@@ -83,7 +84,7 @@ func (this *Client) readerThreadRoutine(thread *Thread) {
 		if readResult == nil {
 			if readLength > 0 {
 				this.messageReceiver.Write(buffer[:readLength])
-				tryExtractMessage()
+				tryExtractMessages()
 			}
 		} else if false == CheckIfNetTimeoutError(readResult) {
 			dropConnection()
@@ -96,6 +97,8 @@ func (this *Client) readerThreadRoutine(thread *Thread) {
 		if connection != nil {
 			for readForward() {
 			}
+		} else {
+			time.Sleep(1000)
 		}
 		time.Sleep(this.ReaderThreadThrashingInterval)
 	}
