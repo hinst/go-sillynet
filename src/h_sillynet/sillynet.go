@@ -18,7 +18,10 @@ func (this *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 		this.listener.SetDeadline(time.Now().Add(1 * time.Second))
 		var acceptedConnection, acceptResult = this.listener.Accept()
 		if nil == acceptResult /*success*/ {
-			this.SetClient(&Client{connection: acceptedConnection})
+			var client = &Client{}
+			client.connection = acceptedConnection
+			client.Start()
+			this.SetClient(client)
 		}
 	}
 	for thread.Active {
@@ -28,7 +31,6 @@ func (this *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
 			time.Sleep(1 * time.Second)
 		}
 	}
-	this.SetClient(nil)
 }
 
 func (this *SimpleServer) Start() bool {
@@ -53,6 +55,11 @@ func (this *SimpleServer) Stop() {
 		this.acceptionThread.Active = false
 		this.acceptionThread.WaitFor()
 		this.acceptionThread = nil
+	}
+	var client = this.Client()
+	this.SetClient(nil)
+	if client != nil {
+		client.Stop()
 	}
 }
 

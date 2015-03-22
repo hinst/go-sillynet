@@ -21,3 +21,11 @@ func MemoryBlockToInt64(block Int64MemoryBlock) int64 {
 	}
 	return x
 }
+
+func (this Int64MemoryBlock) Bytes() []byte {
+	var bytes = make([]byte, SizeOfInt64)
+	for i := 0; i < SizeOfInt64; i++ {
+		bytes[i] = this[i]
+	}
+	return bytes
+}

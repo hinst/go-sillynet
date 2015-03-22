@@ -22,7 +22,7 @@ func (this *MessageReceiver) Write(x byte) {
 }
 
 func (this *MessageReceiver) ready() bool {
-	return (this.expectedSizeDataPosition == SizeOfInt64) && (this.expectedSize == this.memory.Len())
+	return (this.expectedSizeDataPosition == SizeOfInt64) && (this.expectedSize == int64(this.memory.Len()))
 }
 
 func (this *MessageReceiver) clear() {
