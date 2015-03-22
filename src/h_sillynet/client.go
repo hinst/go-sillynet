@@ -26,6 +26,9 @@ type Client struct {
 	messageReceiver MessageReceiver
 	incoming        MemoryBlockQueue
 	outgoing        MemoryBlockQueue
+
+	// Pluggable. Set to receive signals when new messages appear in incoming
+	IncomingMessageEvent Event
 }
 
 func DefaultClientReaderThreadThrashingInterval() time.Duration {
@@ -70,6 +73,9 @@ func (this *Client) readerThreadRoutine(thread *Thread) {
 		var incomingMessage = this.messageReceiver.Extract()
 		if incomingMessage != nil {
 			this.incoming.Push(incomingMessage)
+			if this.IncomingMessageEvent.Exists() {
+				this.IncomingMessageEvent.Signal()
+			}
 		}
 	}
 	var readForward = func() bool {

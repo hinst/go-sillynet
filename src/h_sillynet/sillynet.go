@@ -6,22 +6,27 @@ import "sync"
 
 // "Simple" means that it has one access point. Only one client can connect.
 type SimpleServer struct {
-	Port            int
-	listener        *net.TCPListener
-	acceptionThread *Thread
-	clientLocker    sync.Mutex
-	client          *Client
+	Port                 int
+	listener             *net.TCPListener
+	acceptionThread      *Thread
+	clientLocker         sync.Mutex
+	client               *Client
+	IncomingMessageEvent Event
 }
 
 func (this *SimpleServer) ClientAcceptionRoutine(thread *Thread) {
+	var attachClient = func(connection net.Conn) {
+		var client = NewClient()
+		client.connection = connection
+		client.IncomingMessageEvent = this.IncomingMessageEvent
+		client.Start()
+		this.SetClient(client)
+	}
 	var tryAcceptConnection = func() {
 		this.listener.SetDeadline(time.Now().Add(1 * time.Second))
 		var acceptedConnection, acceptResult = this.listener.Accept()
 		if nil == acceptResult /*success*/ {
-			var client = NewClient()
-			client.connection = acceptedConnection
-			client.Start()
-			this.SetClient(client)
+			attachClient(acceptedConnection)
 		}
 	}
 	for thread.Active {
